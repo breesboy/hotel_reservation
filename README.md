@@ -42,7 +42,7 @@ Use the following default accounts for testing the system.
 
 🛡️ Admin Portal
 
-URL: [/admin/login.php](https://darkgrey-jellyfish-140827.hostingersite.com/admin/login.php)
+URL: [Admin login](https://darkgrey-jellyfish-140827.hostingersite.com/admin/login.php)
 
 Username: admin
 
@@ -50,6 +50,6 @@ Password: admin123
 
 👤 Guest Portal
 
-URL: [/guest/login.php](https://darkgrey-jellyfish-140827.hostingersite.com/guest/login.php)
+URL: [Guest Login](https://darkgrey-jellyfish-140827.hostingersite.com/guest/login.php)
 
 © 2025 Grand Luxe Hotels & Resorts. Designed for Excellence.# hotel_reservation
