@@ -8,7 +8,10 @@
 include_once '../config/conn.php'; 
 
 session_start();
-
+if (!isset($_SESSION['guest_id'])) {
+    header("Location: login.php");
+    exit();
+}
 // --- 1. SESSION CHECK ---
 $guest_name = isset($_SESSION['guest_name']) ? htmlspecialchars($_SESSION['guest_name']) : 'Guest';
 
@@ -29,17 +32,16 @@ $default_amenities = ["Queen Size Bed", "Ensuite Bathroom", "Free Wi-Fi", "TV", 
 
 if (isset($conn) && $room_id > 0) {
     // JOIN rooms with rooms_categories to get the actual category name
-    // NOTE: using c.category_id based on your description. If the PK is 'id', change this back to c.id
-    $sql = "SELECT r.*, c.name AS category_name 
+    // UPDATED: Using c.category_name assuming the table has 'category_id' (PK) and 'category_name' (Label)
+    $sql = "SELECT r.*, c.category_name 
             FROM rooms r 
-            LEFT JOIN room_categories c ON r.category_id = c.category_id 
+            LEFT JOIN room_categories c ON r.category_id = c.id 
             WHERE r.id = ?";
     
     $stmt = $conn->prepare($sql);
     
     if (!$stmt) {
-        // Debugging: Output error if query preparation fails (e.g., wrong table/column names)
-        // Remove this in production!
+        // Debugging: Output error if query preparation fails
         die("Database Error: " . $conn->error);
     }
     
@@ -52,10 +54,9 @@ if (isset($conn) && $room_id > 0) {
             $room = $result->fetch_assoc();
             
             // --- DATA NORMALIZATION ---
-            // Ensure fields match what the template expects, regardless of DB column naming
             
             // 0. Category Name from Join
-            // If the join returned a name, use it as the main category
+            // Use category_name from the join if available
             if (!empty($room['category_name'])) {
                 $room['category'] = $room['category_name'];
             }
@@ -77,7 +78,6 @@ if (isset($conn) && $room_id > 0) {
             }
 
             // 4. Amenities Logic
-            // If DB has an 'amenities' column (comma-separated), use it. Otherwise, use fallback.
             if (!empty($room['amenities'])) {
                 $room['amenities'] = array_map('trim', explode(',', $room['amenities']));
             } else {

@@ -5,7 +5,18 @@
  * Displays overview statistics fetched from the database.
  */
 
-include_once '../config/conn.php';
+// --- DEBUGGING: ENABLE ERROR REPORTING (Remove these 3 lines when fixed) ---
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Check if file exists before including to prevent fatal error
+if (file_exists('../config/conn.php')) {
+    include_once '../config/conn.php';
+} else {
+    die("Error: Configuration file '../config/conn.php' not found. Check your file structure.");
+}
+
 session_start();
 
 // --- 1. SESSION CHECK ---
@@ -24,37 +35,56 @@ $total_categories = 0;
 $pending_reservations = 0;
 $approved_reservations = 0;
 
-if (isset($conn)) {
+// Ensure $conn exists and is a valid mysqli object
+if (isset($conn) && $conn instanceof mysqli) {
+    
+    // Check connection error
+    if ($conn->connect_error) {
+        die("Database Connection Failed: " . $conn->connect_error);
+    }
+
     // 1. Total Rooms
     $sql_rooms = "SELECT COUNT(*) FROM rooms";
-    if ($result = $conn->query($sql_rooms)) {
+    $result = $conn->query($sql_rooms);
+    if ($result) {
         $total_rooms = $result->fetch_row()[0];
     }
 
     // 2. Total Categories 
     // (Tries 'categories' table first, falls back to distinct values in 'rooms' table)
-    $sql_cats = "SELECT COUNT(*) FROM categories"; 
-    if ($result = $conn->query($sql_cats)) {
-        $total_categories = $result->fetch_row()[0];
+    // We check if table exists first to avoid crashing on missing table
+    $table_check = $conn->query("SHOW TABLES LIKE 'categories'");
+    
+    if ($table_check && $table_check->num_rows > 0) {
+        $sql_cats = "SELECT COUNT(*) FROM categories"; 
+        $result = $conn->query($sql_cats);
+        if ($result) {
+            $total_categories = $result->fetch_row()[0];
+        }
     } else {
         // Fallback if categories table doesn't exist yet
-        $sql_cats_fallback = "SELECT COUNT(DISTINCT category) FROM rooms";
-        if ($result = $conn->query($sql_cats_fallback)) {
+        $sql_cats_fallback = "SELECT COUNT(DISTINCT category_id) FROM rooms";
+        $result = $conn->query($sql_cats_fallback);
+        if ($result) {
             $total_categories = $result->fetch_row()[0];
         }
     }
 
     // 3. Pending Reservations
     $sql_pending = "SELECT COUNT(*) FROM reservations WHERE status = 'Pending'";
-    if ($result = $conn->query($sql_pending)) {
+    $result = $conn->query($sql_pending);
+    if ($result) {
         $pending_reservations = $result->fetch_row()[0];
     }
 
     // 4. Approved Reservations
     $sql_approved = "SELECT COUNT(*) FROM reservations WHERE status = 'Approved'";
-    if ($result = $conn->query($sql_approved)) {
+    $result = $conn->query($sql_approved);
+    if ($result) {
         $approved_reservations = $result->fetch_row()[0];
     }
+} else {
+    echo "<div style='color: red; padding: 20px; text-align: center; background: #fff;'><strong>Warning:</strong> Database connection is not established. Check config/conn.php.</div>";
 }
 ?>
 

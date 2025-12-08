@@ -8,6 +8,10 @@
 include_once '../config/conn.php'; 
 
 session_start();
+if (!isset($_SESSION['guest_id'])) {
+    header("Location: login.php" . $redirect_room);
+    exit();
+}
 
 // --- 1. SESSION CHECK ---
 $guest_name = isset($_SESSION['guest_name']) ? htmlspecialchars($_SESSION['guest_name']) : 'Guest';
@@ -36,18 +40,28 @@ if (isset($conn)) {
     }
 
     // B. Get Rooms for Current Page
-    // Note: We use LIMIT and OFFSET for pagination
-    $sql_rooms = "SELECT * FROM rooms LIMIT $rooms_per_page OFFSET $offset";
+    // Join with rooms_categories to get the category name
+    $sql_rooms = "SELECT r.*, c.category_name 
+                  FROM rooms r 
+                  LEFT JOIN room_categories c ON r.category_id = c.id 
+                  LIMIT $rooms_per_page OFFSET $offset";
+                  
     $result_rooms = $conn->query($sql_rooms);
 
     if ($result_rooms && $result_rooms->num_rows > 0) {
         while ($row = $result_rooms->fetch_assoc()) {
             // Map DB columns to the keys expected by the HTML template
-            // We ensure 'image_url' exists even if DB column is named 'image'
+            
+            // Ensure 'image_url' exists even if DB column is named 'image'
             $row['image_url'] = isset($row['image']) ? $row['image'] : (isset($row['image_url']) ? $row['image_url'] : '');
             
             // Ensure room_no exists
             $row['room_no'] = isset($row['room_no']) ? $row['room_no'] : (isset($row['room_number']) ? $row['room_number'] : 'N/A');
+
+            // Fallback for category name if join fails or is null
+            if (empty($row['category_name'])) {
+                $row['category_name'] = 'Standard Room'; 
+            }
 
             $current_rooms[] = $row;
         }
@@ -394,7 +408,7 @@ if ($current_page > $total_pages && $total_pages > 0) {
                 <div class="room-image-container">
                     <img 
                         src="<?php echo htmlspecialchars($room['image_url']); ?>" 
-                        alt="<?php echo htmlspecialchars($room['category']); ?>"
+                        alt="<?php echo htmlspecialchars($room['category_name']); ?>"
                         onerror="this.onerror=null; this.src='https://placehold.co/400x250/0A1A2F/D4AF37?text=Luxury+Room'"
                     >
                 </div>

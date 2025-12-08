@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome | Grand Luxe Hotels & Resorts</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* --- CSS VARIABLES --- */
+      :root {
+        --color-navy: #0a1a2f;
+        --color-navy-light: #112240;
+        --color-gold: #d4af37;
+        --color-gold-hover: #f4c430;
+        --color-white: #ffffff;
+        --color-text-muted: #8892b0;
+        --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.5);
+        --border-radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Montserrat", sans-serif;
+        background-color: var(--color-navy);
+        color: var(--color-white);
+        margin: 0;
+        overflow-x: hidden;
+      }
+
+      /* --- NAVIGATION --- */
+      header {
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: rgba(10, 26, 47, 0.95);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+      }
+
+      .brand {
+        font-family: "Playfair Display", serif;
+        font-size: 1.8rem;
+        color: var(--color-gold);
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        text-decoration: none;
+      }
+
+      .nav-buttons {
+        display: flex;
+        gap: 15px;
+      }
+
+      .btn-nav {
+        padding: 10px 20px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-guest {
+        border: 1px solid var(--color-gold);
+        color: var(--color-gold);
+        background: transparent;
+      }
+      .btn-guest:hover {
+        background: var(--color-gold);
+        color: var(--color-navy);
+      }
+
+      .btn-admin {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--color-text-muted);
+        font-size: 0.8rem;
+      }
+      .btn-admin:hover {
+        border-color: var(--color-white);
+        color: var(--color-white);
+      }
+
+      /* --- HERO SECTION --- */
+      .hero {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: linear-gradient(
+            rgba(10, 26, 47, 0.8),
+            rgba(10, 26, 47, 0.6)
+          ),
+          url("https://placehold.co/1920x1080/050e1a/333?text=Grand+Luxe+Exterior"); /* Placeholder Hero Image */
+        background-size: cover;
+        background-position: center;
+        padding: 0 20px;
+        margin-top: 0;
+      }
+
+      .hero-content {
+        max-width: 800px;
+        animation: fadeIn 1.5s ease-out;
+      }
+
+      .hero h1 {
+        font-family: "Playfair Display", serif;
+        font-size: 4rem;
+        color: var(--color-white);
+        margin-bottom: 20px;
+        line-height: 1.1;
+      }
+
+      .hero h1 span {
+        color: var(--color-gold);
+        display: block;
+        font-size: 1.5rem;
+        font-family: "Montserrat", sans-serif;
+        font-weight: 300;
+        letter-spacing: 3px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+        color: #d1d5db;
+        margin-bottom: 40px;
+        line-height: 1.6;
+      }
+
+      .cta-group {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+      }
+
+      .btn-cta-primary {
+        background-color: var(--color-gold);
+        color: var(--color-navy);
+        padding: 18px 40px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: transform 0.3s, box-shadow 0.3s;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+      }
+
+      .btn-cta-primary:hover {
+        background-color: var(--color-gold-hover);
+        transform: translateY(-5px);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+      }
+
+      /* --- CONTENT SECTIONS --- */
+      section {
+        padding: 100px 20px;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      .section-header h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 3rem;
+        color: var(--color-gold);
+        margin-bottom: 15px;
+      }
+
+      .divider {
+        width: 80px;
+        height: 3px;
+        background: var(--color-gold);
+        margin: 0 auto 20px;
+      }
+
+      /* --- WHO WE ARE (About) --- */
+      .about-section {
+        background-color: var(--color-navy);
+      }
+
+      .about-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        max-width: 1200px;
+        margin: 0 auto;
+        align-items: center;
+      }
+
+      .about-text p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--color-text-muted);
+        margin-bottom: 20px;
+      }
+
+      .about-image img {
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: -20px 20px 0 rgba(212, 175, 55, 0.1);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+
+      /* --- WHAT WE DO (Services) --- */
+      .services-section {
+        background-color: var(--color-navy-light);
+      }
+
+      .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .service-card {
+        background-color: rgba(255, 255, 255, 0.03);
+        padding: 40px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: center;
+        transition: transform 0.3s;
+      }
+
+      .service-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--color-gold);
+        background-color: rgba(10, 26, 47, 0.8);
+      }
+
+      .icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        display: block;
+      }
+
+      .service-card h3 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        color: var(--color-white);
+      }
+
+      .service-card p {
+        color: var(--color-text-muted);
+        line-height: 1.6;
+      }
+
+      /* --- FOOTER --- */
+      footer {
+        background-color: #050e1a;
+        padding: 60px 20px;
+        text-align: center;
+        border-top: 1px solid rgba(212, 175, 55, 0.2);
+      }
+
+      .footer-brand {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        color: var(--color-gold);
+        margin-bottom: 20px;
+        display: inline-block;
+      }
+
+      .copyright {
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- ANIMATIONS --- */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* --- RESPONSIVE --- */
+      @media (max-width: 900px) {
+        .about-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero h1 {
+          font-size: 3rem;
+        }
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: 15px 20px;
+          flex-direction: column; /* Stack logo and buttons */
+          gap: 15px;
+        }
+
+        .brand {
+          font-size: 1.6rem;
+        }
+
+        /* Ensure nav buttons are visible and centered */
+        .nav-buttons {
+          width: 100%;
+          justify-content: center;
+        }
+
+        /* Make buttons slightly smaller on mobile to fit side-by-side */
+        .btn-nav {
+          padding: 8px 16px;
+          font-size: 0.8rem;
+          flex: 1; /* Expand to fill space evenly */
+          text-align: center;
+        }
+
+        /* Hero Text adjustments */
+        .hero h1 {
+          font-size: 2.2rem;
+        }
+
+        .section-header h2 {
+          font-size: 2.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <header>
+      <a href="index.php" class="brand">Grand Luxe</a>
+      <div class="nav-buttons">
+        <!-- Link to Guest Login / Portal -->
+        <a href="guest/login.php" class="btn-nav btn-guest">Guest Login</a>
+        <!-- Link to Admin Portal -->
+        <a href="admin/login.php" class="btn-nav btn-admin">Admin Portal</a>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="hero-content">
+        <h1><span>Experience Elegance</span> Grand Luxe Hotels</h1>
+        <p>
+          Immerse yourself in a world of refined luxury, bespoke service, and
+          timeless sophistication. Your perfect getaway awaits.
+        </p>
+
+        <div class="cta-group">
+          <a href="login.php" class="btn-cta-primary">Book Your Stay</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Who We Are Section -->
+    <section class="about-section">
+      <div class="section-header">
+        <h2>Who We Are</h2>
+        <div class="divider"></div>
+      </div>
+      <div class="about-grid">
+        <div class="about-image">
+          <img
+            src="https://placehold.co/600x400/112240/D4AF37?text=Luxury+Lobby"
+            alt="Grand Luxe Lobby"
+          />
+        </div>
+        <div class="about-text">
+          <p>
+            <strong>Grand Luxe Hotels & Resorts</strong> is more than just a
+            destination; it is a promise of unparalleled excellence. Established
+            with a vision to redefine hospitality, we blend modern architectural
+            brilliance with the warmth of traditional service.
+          </p>
+          <p>
+            Located in the heart of the city, our establishments are sanctuaries
+            of peace for the discerning traveler. Whether you are here for
+            business or leisure, our mission is to anticipate your needs and
+            exceed your expectations at every turn.
+          </p>
+          <p
+            style="
+              color: var(--color-gold);
+              font-family: 'Playfair Display', serif;
+              font-size: 1.2rem;
+              margin-top: 30px;
+            "
+          >
+            "Luxury is not a place, it's an experience."
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- What We Do Section -->
+    <section class="services-section">
+      <div class="section-header">
+        <h2>What We Do</h2>
+        <div class="divider"></div>
+        <p
+          style="
+            color: var(--color-text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+          "
+        >
+          We curate exceptional experiences designed to provide comfort,
+          relaxation, and memorable moments.
+        </p>
+      </div>
+
+      <div class="services-grid">
+        <!-- Service 1 -->
+        <div class="service-card">
+          <span class="icon">🛏️</span>
+          <h3>Premium Accommodation</h3>
+          <p>
+            Relax in our spacious, meticulously designed suites featuring
+            panoramic views, smart amenities, and artisanal furnishings.
+          </p>
+        </div>
+
+        <!-- Service 2 -->
+        <div class="service-card">
+          <span class="icon">🍽️</span>
+          <h3>Fine Dining</h3>
+          <p>
+            Savor culinary masterpieces crafted by world-renowned chefs in our
+            exclusive restaurants and private dining areas.
+          </p>
+        </div>
+
+        <!-- Service 3 -->
+        <div class="service-card">
+          <span class="icon">🧖‍♀️</span>
+          <h3>Wellness & Spa</h3>
+          <p>
+            Rejuvenate your mind and body with our comprehensive spa treatments,
+            heated pools, and state-of-the-art fitness centers.
+          </p>
+        </div>
+
+        <!-- Service 4 -->
+        <div class="service-card">
+          <span class="icon">🛎️</span>
+          <h3>Concierge Service</h3>
+          <p>
+            Enjoy 24/7 personalized concierge support to handle your itinerary,
+            transport, and special requests with ease.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <span class="footer-brand">Grand Luxe</span>
+        <p class="copyright">
+          &copy;
+          <?php echo date("Y"); ?>
+          Grand Luxe Hotels & Resorts. All Rights Reserved. <br />
+          <span style="font-size: 0.8rem; color: #555"
+            >Designed for Excellence.</span
+          >
+        </p>
+
+        <div style="margin-top: 20px">
+          <a
+            href="admin/login.php"
+            style="
+              color: var(--color-text-muted);
+              text-decoration: none;
+              font-size: 0.8rem;
+              border-bottom: 1px dotted #555;
+            "
+            >Admin Access</a
+          >
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

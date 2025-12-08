@@ -9,43 +9,62 @@ include '../config/conn.php';
 session_start();
 
 // --- 1. SESSION CHECK ---
-// if (!isset($_SESSION['admin_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 $admin_username = isset($_SESSION['admin_username']) ? htmlspecialchars($_SESSION['admin_username']) : 'Administrator';
 
-
+// --- 2. FETCH CATEGORIES ---
+$categories = []; // Initialize array
 $stmt2 = $conn->query("SELECT * FROM room_categories");
-    if ($stmt2->num_rows > 0) {
-        while ($row = $stmt2->fetch_assoc()) {
-            // Mock count of rooms per category
-            $row['count'] = rand(1, 15);
-            $categories[] = $row;
-            
-        }
+if ($stmt2 && $stmt2->num_rows > 0) {
+    while ($row = $stmt2->fetch_assoc()) {
+        // In a real app, you'd run a COUNT query on the rooms table here
+        // For now, we'll just mock it or fetch if you have a relation
+        $cat_id = $row['id'];
+        $count_res = $conn->query("SELECT COUNT(*) as count FROM rooms WHERE category_id = $cat_id");
+        $count = ($count_res) ? $count_res->fetch_assoc()['count'] : 0;
+        
+        $row['count'] = $count;
+        $categories[] = $row;
     }
+}
 
-// Handle Form Submission (Mock)
+// Handle Form Submission (Add Category)
 $msg = "";
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
-    $new_category = htmlspecialchars($_POST['category_name']);
-    
-    $stmt = $conn->query("INSERT INTO room_categories (category_name) VALUES ('$new_category')");
-    
- 
-    $msg = "Category '$new_category' added successfully.";
+$msg_type = "";
 
-    // Refresh categories list
-    $categories = [];
-    $stmt2 = $conn->query("SELECT * FROM room_categories");
-    if ($stmt2->num_rows > 0) {
-        while ($row = $stmt2->fetch_assoc()) {
-            // Mock count of rooms per category
-            $row['count'] = rand(1, 15);
-            $categories[] = $row;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
+    $new_category = htmlspecialchars(trim($_POST['category_name']));
+    
+    if (!empty($new_category)) {
+        // Use prepared statement for security
+        $stmt = $conn->prepare("INSERT INTO room_categories (category_name) VALUES (?)");
+        $stmt->bind_param("s", $new_category);
+        
+        if ($stmt->execute()) {
+            $msg = "Category '$new_category' added successfully.";
+            $msg_type = "success";
+            
+            // Refresh categories list
+            $categories = [];
+            $stmt2 = $conn->query("SELECT * FROM room_categories");
+            if ($stmt2->num_rows > 0) {
+                while ($row = $stmt2->fetch_assoc()) {
+                    $cat_id = $row['id'];
+                    $count_res = $conn->query("SELECT COUNT(*) as count FROM rooms WHERE category_id = $cat_id");
+                    $count = ($count_res) ? $count_res->fetch_assoc()['count'] : 0;
+                    $row['count'] = $count;
+                    $categories[] = $row;
+                }
+            }
+        } else {
+            $msg = "Error adding category: " . $conn->error;
+            $msg_type = "error";
         }
+        $stmt->close();
     }
 }
 ?>
@@ -132,6 +151,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
         .nav-links a:hover {
             color: var(--color-gold);
         }
+                .logout-btn {
+            border: 1px solid var(--color-gold);
+            padding: 8px 18px;
+            border-radius: 4px;
+            color: var(--color-gold);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--color-gold);
+            color: var(--color-navy);
+        }
+
 
         /* --- HERO SECTION --- */
         .hero {
@@ -223,6 +258,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
             width: 100%;
             text-align: center;
             border: 1px solid rgba(39, 174, 96, 0.3);
+        }
+        
+        .alert-error {
+            color: var(--color-danger);
+            background-color: rgba(214, 48, 49, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(214, 48, 49, 0.3);
         }
 
         /* --- CATEGORIES GRID --- */
@@ -366,8 +411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
             </span>
             <a href="dashboard.php">Dashboard</a>
             <a href="manage_rooms.php">Manage Rooms</a>
-            <a href="reservations.php">Reservations</a>
-            <a href="logout.php" style="color: var(--color-gold);">Logout</a>
+            <a href="logout.php" style="color: var(--color-gold);" class="logout-btn">Logout</a>
         </nav>
     </header>
 
@@ -382,7 +426,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
     <section class="add-section">
         <div class="add-card">
             <?php if(!empty($msg)): ?>
-                <div class="alert-success"><?php echo $msg; ?></div>
+                <div class="<?php echo ($msg_type == 'error') ? 'alert-error' : 'alert-success'; ?>">
+                    <?php echo $msg; ?>
+                </div>
             <?php endif; ?>
             
             <form method="POST" class="form-group">
@@ -394,22 +440,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['category_name'])) {
 
     <!-- Categories Grid -->
     <main class="categories-grid">
-        <?php foreach ($categories as $cat): ?>
-            <div class="cat-card">
-                <div class="cat-info">
-                    <h3 class="cat-name"><?php echo htmlspecialchars($cat['category_name']); ?></h3>
-                    <p class="cat-count"><?php echo $cat['count']; ?> Active Rooms</p>
+        <?php if (!empty($categories)): ?>
+            <?php foreach ($categories as $cat): ?>
+                <div class="cat-card">
+                    <div class="cat-info">
+                        <h3 class="cat-name"><?php echo htmlspecialchars($cat['category_name']); ?></h3>
+                        <p class="cat-count"><?php echo $cat['count']; ?> Active Rooms</p>
+                    </div>
+                    <div class="cat-actions">
+                        <!-- Points to the edit_category.php file we are creating next -->
+                        <a href="edit_category.php?id=<?php echo $cat['id']; ?>" class="btn-action btn-edit">Edit</a>
+                        <a href="../config/delete_category.php?id=<?php echo $cat['id']; ?>" 
+                           class="btn-action btn-delete"
+                           onclick="return confirm('Are you sure you want to delete this category?');">
+                           Delete
+                        </a>
+                    </div>
                 </div>
-                <div class="cat-actions">
-                    <a href="edit_category.php?id=<?php echo $cat['id']; ?>" class="btn-action btn-edit">Edit</a>
-                    <a href="../config/delete_category.php?id=<?php echo $cat['id']; ?>" 
-                       class="btn-action btn-delete"
-                       onclick="return confirm('Are you sure you want to delete this category?');">
-                       Delete
-                    </a>
-                </div>
-            </div>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p style="text-align: center; grid-column: 1/-1; color: var(--color-text-muted);">No categories found.</p>
+        <?php endif; ?>
     </main>
 
     <!-- Footer -->

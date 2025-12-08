@@ -138,6 +138,22 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
         .nav-links a:hover {
             color: var(--color-gold);
         }
+                .logout-btn {
+            border: 1px solid var(--color-gold);
+            padding: 8px 18px;
+            border-radius: 4px;
+            color: var(--color-gold);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--color-gold);
+            color: var(--color-navy);
+        }
+
 
         /* --- HERO SECTION --- */
         .hero {
@@ -379,10 +395,8 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 <?php echo $admin_username; ?>
             </span>
             <a href="dashboard.php">Dashboard</a>
-            <a href="add_room.php">Add Room</a>
             <a href="manage_rooms.php">Manage Rooms</a>
-            <a href="categories.php">Categories</a>
-            <a href="logout.php" style="color: var(--color-gold);">Logout</a>
+            <a href="logout.php" style="color: var(--color-gold);" class="logout-btn">Logout</a>
         </nav>
     </header>
 

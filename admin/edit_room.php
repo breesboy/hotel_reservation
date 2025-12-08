@@ -59,13 +59,13 @@ if ($stmt = $conn->prepare("SELECT id, category_name FROM room_categories ORDER 
 
     // If the room record stores a category ID, convert it to the category name so the existing form logic works
     if (isset($room['category_id']) && is_numeric($room['category_id'])) {
-        if ($stmt2 = $conn->prepare("SELECT name FROM categories WHERE id = ? LIMIT 1")) {
+        if ($stmt2 = $conn->prepare("SELECT category_name FROM room_categories WHERE id = ? LIMIT 1")) {
             $stmt2->bind_param("i", $room['category_id']);
             $stmt2->execute();
             $r2 = $stmt2->get_result();
             if ($r2 && $r2->num_rows > 0) {
                 $row2 = $r2->fetch_assoc();
-                $room['category_id'] = $row2['name'];
+                $room['category_id'] = $row2['category_name'];
             }
             $stmt2->close();
         }
@@ -170,6 +170,22 @@ $error_message = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
         .nav-links a:hover {
             color: var(--color-gold);
         }
+                .logout-btn {
+            border: 1px solid var(--color-gold);
+            padding: 8px 18px;
+            border-radius: 4px;
+            color: var(--color-gold);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--color-gold);
+            color: var(--color-navy);
+        }
+
 
         /* --- MAIN CONTENT --- */
         main {
@@ -378,7 +394,7 @@ $error_message = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
             </span>
             <a href="dashboard.php">Dashboard</a>
             <a href="manage_rooms.php">Manage Rooms</a>
-            <a href="logout.php" style="color: var(--color-gold);">Logout</a>
+            <a href="logout.php" style="color: var(--color-gold);" class="logout-btn">Logout</a>
         </nav>
     </header>
 

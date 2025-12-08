@@ -1,56 +1,102 @@
 <?php
 /**
  * MY_RESERVATIONS.PHP - Guest Reservation History Page
- * Displays a list of the current user's past and upcoming reservations with pagination.
+ * Displays a list of the current user's past and upcoming reservations with pagination from the database.
  */
 
+include_once '../config/conn.php';
 session_start();
 
 // --- 1. SESSION CHECK ---
 // Redirect to login if not authenticated
-// if (!isset($_SESSION['guest_id'])) {
-//     header("Location: login.php");
-//     exit();
-// }
-
-// $guest_id = $_SESSION['guest_id'];
-$guest_name = isset($_SESSION['guest_name']) ? htmlspecialchars($_SESSION['guest_name']) : 'Valued Guest';
-
-// --- 2. SAMPLE RESERVATION DATA ---
-// NOTE: In a real system, this data would be fetched from a database based on $guest_id
-$all_reservations = [];
-$room_categories = ["Deluxe Suite", "Executive King", "Ocean View Balcony", "Standard Premium"];
-
-for ($i = 1; $i <= 10; $i++) {
-    $category_index = ($i - 1) % count($room_categories);
-    $status_code = $i % 3;
-    $status = $status_code == 0 ? "Approved" : ($status_code == 1 ? "Pending" : "Rejected");
-    
-    $all_reservations[] = [
-        "id" => $i,
-        "room_id" => $i, // Simulated link to room_details
-        "room_no" => "Room " . str_pad($i, 3, '0', STR_PAD_LEFT),
-        "category" => $room_categories[$category_index],
-        "check_in" => date("Y-m-d", strtotime("+$i days")),
-        "check_out" => date("Y-m-d", strtotime("+".($i + 3)." days")), // 3 nights stay
-        "total_cost" => rand(600, 1200) * (($i % 4) + 1), // Varies based on room/nights
-        "status" => $status
-    ];
+if (!isset($_SESSION['guest_id'])) {
+    header("Location: login.php");
+    exit();
 }
 
-// --- 3. PAGINATION LOGIC ---
+$guest_id = $_SESSION['guest_id'];
+$guest_name = isset($_SESSION['guest_name']) ? htmlspecialchars($_SESSION['guest_name']) : 'Valued Guest';
+
+// --- 2. PAGINATION CONFIGURATION ---
 $reservations_per_page = 5;
-$total_reservations = count($all_reservations);
-$total_pages = ceil($total_reservations / $reservations_per_page);
-
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-
-// Ensure current page is within valid range
 if ($current_page < 1) $current_page = 1;
-if ($current_page > $total_pages) $current_page = $total_pages;
 
-$start_index = ($current_page - 1) * $reservations_per_page;
-$current_reservations = array_slice($all_reservations, $start_index, $reservations_per_page);
+$offset = ($current_page - 1) * $reservations_per_page;
+
+// --- 3. FETCH DATA FROM DB ---
+$current_reservations = [];
+$total_reservations = 0;
+$total_pages = 0;
+
+if (isset($conn)) {
+    // A. Count Total Reservations for this Guest
+    $count_sql = "SELECT COUNT(*) FROM reservations WHERE guest_id = ?";
+    $stmt = $conn->prepare($count_sql);
+    if ($stmt) {
+        $stmt->bind_param("i", $guest_id);
+        $stmt->execute();
+        $stmt->bind_result($total_reservations);
+        $stmt->fetch();
+        $stmt->close();
+    }
+
+    $total_pages = ceil($total_reservations / $reservations_per_page);
+    
+    // Adjust page if out of bounds
+    if ($current_page > $total_pages && $total_pages > 0) {
+        $current_page = $total_pages;
+        $offset = ($current_page - 1) * $reservations_per_page;
+    }
+
+    // B. Fetch Reservation Details
+    // Joins with rooms to get price/number, and categories for the name
+    // Note: We handle both 'room_no' and 'room_number' column possibilities via aliases if needed
+    $sql = "SELECT 
+                r.id, 
+                r.room_id, 
+                r.check_in, 
+                r.check_out, 
+                r.status, 
+                rm.room_no,      -- Assuming column name based on previous files. Change to rm.room_number if needed
+                rm.price, 
+                c.category_name 
+            FROM reservations r
+            JOIN rooms rm ON r.room_id = rm.id
+            LEFT JOIN room_categories c ON rm.category_id = c.id
+            WHERE r.guest_id = ?
+            ORDER BY r.id DESC
+            LIMIT ? OFFSET ?";
+
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param("iii", $guest_id, $reservations_per_page, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        while ($row = $result->fetch_assoc()) {
+            // Calculate Total Cost dynamically (Days * Price)
+            $in_date = strtotime($row['check_in']);
+            $out_date = strtotime($row['check_out']);
+            $datediff = $out_date - $in_date;
+            $days = max(1, round($datediff / (60 * 60 * 24))); // Minimum 1 day
+            $total_cost = $days * $row['price'];
+
+            // Prepare display array
+            $current_reservations[] = [
+                "id" => $row['id'],
+                "room_id" => $row['room_id'],
+                "room_no" => $row['room_no'] ?? 'Room #' . $row['room_id'], // Fallback
+                "category" => $row['category_name'] ?? 'Standard Room',
+                "check_in" => $row['check_in'],
+                "check_out" => $row['check_out'],
+                "total_cost" => $total_cost,
+                "status" => ucfirst($row['status']) // Capitalize for display/CSS
+            ];
+        }
+        $stmt->close();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -76,9 +122,9 @@ $current_reservations = array_slice($all_reservations, $start_index, $reservatio
             --color-text-muted: #8892b0;
             --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
             --border-radius: 12px;
-            --badge-approved: #D4AF37; /* Gold */
-            --badge-pending: #0A1A2F; /* Deep Navy */
-            --badge-rejected: #D32F2F; /* Dark Red */
+            --badge-approved: #27ae60; /* Green for Approved */
+            --badge-pending: #D4AF37;  /* Gold for Pending */
+            --badge-rejected: #D32F2F; /* Red for Rejected */
             --badge-pending-bg: rgba(212, 175, 55, 0.1);
         }
 
@@ -251,14 +297,14 @@ $current_reservations = array_slice($all_reservations, $start_index, $reservatio
             align-self: flex-start;
         }
         .status-Approved {
-            background-color: var(--badge-approved);
-            color: var(--color-navy);
+            background-color: rgba(39, 174, 96, 0.15);
+            color: var(--badge-approved);
             border: 1px solid var(--badge-approved);
         }
         .status-Pending {
             background-color: var(--badge-pending-bg);
-            color: var(--badge-approved);
-            border: 1px solid var(--badge-approved);
+            color: var(--badge-pending);
+            border: 1px solid var(--badge-pending);
         }
         .status-Rejected {
             background-color: rgba(211, 47, 47, 0.2);
@@ -370,7 +416,7 @@ $current_reservations = array_slice($all_reservations, $start_index, $reservatio
             <span style="color: var(--color-text-muted); margin-right: 15px;">Welcome, <?php echo $guest_name; ?></span>
             <a href="home.php" class="dashboard-btn">Dashboard</a>
             <a href="available_rooms.php">Rooms</a>
-            <a href="logout.php" class="logout-btn">Logout</a>
+            <a href="logout.php" class="logout-btn" style="border: none; color: white;">Logout</a>
         </nav>
     </header>
 
@@ -434,6 +480,7 @@ $current_reservations = array_slice($all_reservations, $start_index, $reservatio
         </div>
 
         <!-- Pagination Controls -->
+        <?php if ($total_pages > 1): ?>
         <div class="pagination-controls">
             <?php
             // Previous Page Link
@@ -465,13 +512,14 @@ $current_reservations = array_slice($all_reservations, $start_index, $reservatio
                 Next &rarr;
             </a>
         </div>
+        <?php endif; ?>
 
         <?php else: ?>
             <!-- No Reservations Message -->
-            <div class="luxury-card" style="text-align: center; padding: 60px;">
-                <h3 style="color: var(--color-gold);">No Reservations Found</h3>
-                <p style="color: var(--color-text-muted); margin-top: 15px;">It looks like you haven't booked anything yet. Start your luxury stay!</p>
-                <a href="available_rooms.php" class="btn-details" style="display: inline-block; margin-top: 30px;">
+            <div style="text-align: center; padding: 60px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--color-gold);">
+                <h3 style="color: var(--color-gold); margin-bottom: 15px;">No Reservations Found</h3>
+                <p style="color: var(--color-text-muted); margin-bottom: 30px;">It looks like you haven't booked anything yet. Start your luxury stay!</p>
+                <a href="available_rooms.php" class="btn-details" style="display: inline-block;">
                     Browse Available Rooms
                 </a>
             </div>
